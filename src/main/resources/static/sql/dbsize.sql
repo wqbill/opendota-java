@@ -1,0 +1,1 @@
+select relname, reltuples::bigint,pg_size_pretty(pg_total_relation_size(oid)) from pg_class order by pg_total_relation_size(oid) desc;

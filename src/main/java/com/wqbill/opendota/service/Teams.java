@@ -6,6 +6,5 @@ public class Teams {
     @Scheduled(fixedRate = 60 * 60 * 1000)
     public void doTeams() {
 
-
     }
 }
