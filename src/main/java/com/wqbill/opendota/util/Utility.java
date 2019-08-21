@@ -1,7 +1,6 @@
 package com.wqbill.opendota.util;
 
 import lombok.Data;
-import lombok.var;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -223,6 +222,6 @@ public class Utility {
  * Errors from Steam API
  * */
     public static void getData(String apiUrl){
-        var u= null;
+        Object u= null;
     }
 }
