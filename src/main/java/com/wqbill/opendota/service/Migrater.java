@@ -17,7 +17,7 @@ public class Migrater {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+//    @Scheduled(fixedRate = 5 * 60 * 1000)
     public void doMigrate() throws IOException {
         String sql = IOUtils.toString(new ClassPathResource("/static/sql/create_tables.sql").getInputStream(), StandardCharsets.UTF_8);
         jdbcTemplate.execute(sql);

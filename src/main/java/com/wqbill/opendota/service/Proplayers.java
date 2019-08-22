@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 @Component
 public class Proplayers {
-    @Scheduled(fixedRate = 30 * 60 * 1000)
+//    @Scheduled(fixedRate = 30 * 60 * 1000)
     public void doProPlayers() {
         Utility.ApiJob apiJob = Utility.generateJob("api_notable", new HashMap<>());
 

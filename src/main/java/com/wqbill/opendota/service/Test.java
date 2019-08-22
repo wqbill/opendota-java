@@ -11,4 +11,6 @@ public class Test {
     public void testRate() {
         System.out.println(new Date());
     }
+
+    public static String match_seq_num = "4176282659";
 }

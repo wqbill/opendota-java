@@ -17,7 +17,7 @@ public class Teams {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Scheduled(fixedRate = 60 * 60 * 1000)
+//    @Scheduled(fixedRate = 60 * 60 * 1000)
     public void doTeams() {
         String sql = "select distinct team_id from team_match order by team_id desc";
         List<Map<String, Object>> teamIds = jdbcTemplate.queryForList(sql);
