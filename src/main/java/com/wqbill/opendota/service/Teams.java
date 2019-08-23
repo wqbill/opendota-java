@@ -1,6 +1,7 @@
 package com.wqbill.opendota.service;
 
 import com.wqbill.opendota.util.Utility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @Component
 public class Teams {
+    @Autowired Utility utility;
     private final JdbcTemplate jdbcTemplate;
 
     public Teams(JdbcTemplate jdbcTemplate) {
@@ -24,7 +26,7 @@ public class Teams {
         teamIds.forEach(x -> {
             Map<String, Object> map = new HashMap<>();
             map.put("start_at_team_id", x.get("team_id"));
-            Utility.ApiJob apiJob = Utility.generateJob("api_team_info_by_team_id", map);
+            Utility.ApiJob apiJob = utility.generateJob("api_team_info_by_team_id", map);
         });
     }
 }

@@ -7,6 +7,7 @@ import com.wqbill.opendota.util.Utility;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,11 +16,13 @@ import java.util.Map;
 
 @RestController
 public class StartController {
+    @Autowired
+    Utility utility;
     @RequestMapping("start")
     public void start() throws Exception {
         Map<String, Object> map = new HashMap<>();
         map.put("start_at_match_seq_num", Test.match_seq_num);
-        Utility.ApiJob apiJob = Utility.generateJob("api_sequence", map);
+        Utility.ApiJob apiJob = utility.generateJob("api_sequence", map);
         String url = apiJob.getUrl();
         System.out.println(url);
         OkHttpClient client = new OkHttpClient();
@@ -31,11 +34,12 @@ public class StartController {
         for (JsonNode match : matches) {
 //            System.out.println(match);
         }
-        System.out.println(matches.size());
         System.out.println(matches.get(matches.size() - 1).get("match_seq_num").asLong() + 1);
     }
 
     public static void main(String[] args) throws Exception {
-        new StartController().start();
+        System.out.printf("%s%s%s",1,2,3);
+        System.out.printf("%s%s%s",4,5,6);
+//        new StartController().start();
     }
 }

@@ -1,14 +1,16 @@
 package com.wqbill.opendota.util;
 
+import com.wqbill.opendota.commons.Callback;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.wqbill.opendota.util.Const.SEPARATOR;
-
+@Component
 public class Utility {
 
     /*
@@ -29,6 +31,13 @@ public class Utility {
         return id + 76561197960265728L;
     }
 
+    /**
+     * The anonymous account ID used as a placeholder for player with match privacy settings on
+     * */
+    public Long getAnonymousAccountId() {
+        return 4294967295L;
+    }
+
     @Data
     public static class ApiJob {
         private String url;
@@ -46,7 +55,7 @@ public class Utility {
      */
     static String apiUrl = "http://api.steampowered.com";
 
-    public static ApiJob generateJob(String type, Map<String, Object> payload) {
+    public ApiJob generateJob(String type, Map<String, Object> payload) {
         ApiJob apiJob = new ApiJob();
         String apiKey = "A33FF4A5D4F26785DF43E75B5245A531";
         StringBuilder stringBuilder = new StringBuilder(apiUrl);
@@ -221,7 +230,90 @@ public class Utility {
  * Injecting API key for Steam API
  * Errors from Steam API
  * */
-    public static void getData(String apiUrl){
-        Object u= null;
+    public void getData(Map url, Callback cb){
+        let u;
+        int delay = Number(config.DEFAULT_DELAY);
+        int timeout = 5000;
+        if (url!=null && url.get("url")!=null) {
+            // options object
+            if (Array.isArray(url.get("url"))) {
+                // select a random element if array
+                u = url.url[Math.floor(Math.random() * url.url.length)];
+            } else {
+                u = url.url;
+            }
+            delay = url.delay || delay;
+            timeout = url.timeout || timeout;
+        } else {
+            u = url;
+        }
+  const parse = urllib.parse(u, true);
+  const steamApi = parse.host === 'api.steampowered.com';
+  const stratzApi = parse.host === 'api.stratz.com';
+        if (steamApi) {
+            // choose an api key to use
+    const apiKeys = config.STEAM_API_KEY.split(',');
+            parse.query.key = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+            parse.search = null;
+            // choose a steam api host
+    const apiHosts = config.STEAM_API_HOST.split(',');
+            parse.host = apiHosts[Math.floor(Math.random() * apiHosts.length)];
+        }
+  const target = urllib.format(parse);
+        console.log('%s - getData: %s', new Date(), target);
+        return setTimeout(() => {
+                request({
+                        url: target,
+                json: !(url.raw),
+                timeout,
+    }, (err, res, body) => {
+            if (err
+                    || !res
+                    || res.statusCode !== 200
+                    || !body
+                    || (steamApi
+                    && !url.raw
+                    && !body.result
+                    && !body.response
+                    && !body.player_infos
+                    && !body.teams
+                    && !body.game_list
+                    && !body.match
+                    && !body.data)
+                    || (stratzApi && (!body || !body[0]))
+            ) {
+                // invalid response
+                if (url.noRetry) {
+                    return cb(err || 'invalid response');
+                }
+                console.error('[INVALID] status: %s, retrying: %s', res ? res.statusCode : '', target);
+                // var backoff = res && res.statusCode === 429 ? delay * 2 : 0;
+        const backoff = 0;
+                return setTimeout(() => {
+                        getData(url, cb);
+        }, backoff);
+            } if (body.result) {
+                // steam api usually returns data with body.result, getplayersummaries has body.response
+                if (body.result.status === 15
+                        || body.result.error === 'Practice matches are not available via GetMatchDetails'
+                        || body.result.error === 'No Match ID specified'
+                        || body.result.error === 'Match ID not found') {
+                    // private match history or attempting to get practice match/invalid id, don't retry
+                    // non-retryable
+                    return cb(body);
+                } if (body.result.error || body.result.status === 2) {
+                    // valid response, but invalid data, retry
+                    if (url.noRetry) {
+                        return cb(err || 'invalid data');
+                    }
+                    console.error('invalid data, retrying: %s, %s', target, JSON.stringify(body));
+                    return getData(url, cb);
+                }
+            }
+            return cb(null, body, {
+                    hostname: parse.host,
+      });
+        });
+  }, delay);
     }
 }
