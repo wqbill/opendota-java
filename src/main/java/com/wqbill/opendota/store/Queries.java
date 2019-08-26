@@ -21,7 +21,7 @@ public class Queries {
     Utility utility;
     JsonNode players;
     JsonNode match;
-    public void insertMatch(JsonNode match,Map options, Callback cb) throws Exception {
+    public void insertMatch(JsonNode match,Map options, Callback cb)  {
         this.match=match;
         ObjectMapper objectMapper = new ObjectMapper();
         players = objectMapper.readTree(match.get("players") != null ? match.get("players").toString() : null);

@@ -22,4 +22,12 @@ public class Redis {
     public void put(Object key, Object value, long timeout) {
         redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
     }
+
+    public void set(Object key, Object value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+
+    public void set(Object key, Object value, long timeout) {
+        redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
+    }
 }

@@ -1,15 +1,22 @@
 package com.wqbill.opendota.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wqbill.opendota.commons.Callback;
+import com.wqbill.opendota.config.Config;
 import lombok.Data;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import sun.net.util.URLUtil;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.wqbill.opendota.util.Const.SEPARATOR;
+
 @Component
 public class Utility {
 
@@ -33,7 +40,7 @@ public class Utility {
 
     /**
      * The anonymous account ID used as a placeholder for player with match privacy settings on
-     * */
+     */
     public Long getAnonymousAccountId() {
         return 4294967295L;
     }
@@ -223,53 +230,59 @@ public class Utility {
         }
         return apiJob;
     }
-/**
- * A wrapper around HTTP requests that handles:
- * proxying
- * retries/retry delay
- * Injecting API key for Steam API
- * Errors from Steam API
- * */
-    public void getData(Map url, Callback cb){
-        let u;
-        int delay = Number(config.DEFAULT_DELAY);
+
+    /**
+     * A wrapper around HTTP requests that handles:
+     * proxying
+     * retries/retry delay
+     * Injecting API key for Steam API
+     * Errors from Steam API
+     */
+    @Autowired
+    Config config;
+
+    public void getData(Map url, Callback cb) {
+        Object u;
+        int delay = Integer.parseInt(config.DEFAULT_DELAY);
         int timeout = 5000;
-        if (url!=null && url.get("url")!=null) {
+        if (url != null && url.get("url") != null) {
             // options object
-            if (Array.isArray(url.get("url"))) {
+            if (url.get("url") instanceof List) {
                 // select a random element if array
-                u = url.url[Math.floor(Math.random() * url.url.length)];
+                List urlList = (List) url.get("url");
+                u = urlList.get((int) Math.floor(Math.random() * urlList.size()));
             } else {
-                u = url.url;
+                u = url.get("url");
             }
-            delay = url.delay || delay;
-            timeout = url.timeout || timeout;
+            delay = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("delay").toString()), delay);
+            timeout = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("timeout").toString()), timeout);
         } else {
             u = url;
         }
-  const parse = urllib.parse(u, true);
-  const steamApi = parse.host === 'api.steampowered.com';
-  const stratzApi = parse.host === 'api.stratz.com';
+        final URL parse = new URL(url);
+        final boolean steamApi = StringUtils.equals(parse.getHost(),"api.steampowered.com");
+        final boolean stratzApi = StringUtils.equals(parse.getHost(),"api.stratz.com");
         if (steamApi) {
             // choose an api key to use
-    const apiKeys = config.STEAM_API_KEY.split(',');
+    final String[] apiKeys = config.STEAM_API_KEY.split(",");
+    parse.getQuery().
             parse.query.key = apiKeys[Math.floor(Math.random() * apiKeys.length)];
             parse.search = null;
             // choose a steam api host
-    const apiHosts = config.STEAM_API_HOST.split(',');
+    final String[] apiHosts = config.STEAM_API_HOST.split(",");
             parse.host = apiHosts[Math.floor(Math.random() * apiHosts.length)];
         }
   const target = urllib.format(parse);
         console.log('%s - getData: %s', new Date(), target);
-        return setTimeout(() => {
+        return setTimeout(() = > {
                 request({
-                        url: target,
-                json: !(url.raw),
+                        url:target,
+                json:!(url.raw),
                 timeout,
-    }, (err, res, body) => {
+    },(err, res, body) =>{
             if (err
                     || !res
-                    || res.statusCode !== 200
+                    || res.statusCode != = 200
                     || !body
                     || (steamApi
                     && !url.raw
@@ -289,19 +302,19 @@ public class Utility {
                 console.error('[INVALID] status: %s, retrying: %s', res ? res.statusCode : '', target);
                 // var backoff = res && res.statusCode === 429 ? delay * 2 : 0;
         const backoff = 0;
-                return setTimeout(() => {
+                return setTimeout(() = > {
                         getData(url, cb);
-        }, backoff);
+        },backoff);
             } if (body.result) {
                 // steam api usually returns data with body.result, getplayersummaries has body.response
-                if (body.result.status === 15
-                        || body.result.error === 'Practice matches are not available via GetMatchDetails'
-                        || body.result.error === 'No Match ID specified'
-                        || body.result.error === 'Match ID not found') {
+                if (body.result.status == = 15
+                        || body.result.error == = 'Practice matches are not available via GetMatchDetails'
+                        || body.result.error == = 'No Match ID specified'
+                        || body.result.error == = 'Match ID not found') {
                     // private match history or attempting to get practice match/invalid id, don't retry
                     // non-retryable
                     return cb(body);
-                } if (body.result.error || body.result.status === 2) {
+                } if (body.result.error || body.result.status == = 2) {
                     // valid response, but invalid data, retry
                     if (url.noRetry) {
                         return cb(err || 'invalid data');
@@ -311,9 +324,9 @@ public class Utility {
                 }
             }
             return cb(null, body, {
-                    hostname: parse.host,
+                    hostname:parse.host,
       });
         });
-  }, delay);
+  },delay);
     }
 }
