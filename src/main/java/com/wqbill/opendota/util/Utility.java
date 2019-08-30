@@ -1,16 +1,21 @@
 package com.wqbill.opendota.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wqbill.opendota.commons.Callback;
 import com.wqbill.opendota.config.Config;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.HttpUrl;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriBuilder;
 import sun.net.util.URLUtil;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,6 +23,7 @@ import java.util.stream.Collectors;
 import static com.wqbill.opendota.util.Const.SEPARATOR;
 
 @Component
+@Slf4j
 public class Utility {
 
     /*
@@ -64,7 +70,7 @@ public class Utility {
 
     public ApiJob generateJob(String type, Map<String, Object> payload) {
         ApiJob apiJob = new ApiJob();
-        String apiKey = "A33FF4A5D4F26785DF43E75B5245A531";
+        String apiKey;
         StringBuilder stringBuilder = new StringBuilder(apiUrl);
         String match_id = (String) payload.get("match_id");
         String account_id = (String) payload.get("account_id");
@@ -242,7 +248,7 @@ public class Utility {
     Config config;
 
     public void getData(Map url, Callback cb) {
-        Object u;
+        String u;
         int delay = Integer.parseInt(config.DEFAULT_DELAY);
         int timeout = 5000;
         if (url != null && url.get("url") != null) {
@@ -250,30 +256,33 @@ public class Utility {
             if (url.get("url") instanceof List) {
                 // select a random element if array
                 List urlList = (List) url.get("url");
-                u = urlList.get((int) Math.floor(Math.random() * urlList.size()));
+                u = urlList.get((int) Math.floor(Math.random() * urlList.size())).toString();
             } else {
-                u = url.get("url");
+                u = url.get("url").toString();
             }
             delay = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("delay").toString()), delay);
             timeout = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("timeout").toString()), timeout);
         } else {
             u = url;
         }
-        final URL parse = new URL(url);
-        final boolean steamApi = StringUtils.equals(parse.getHost(),"api.steampowered.com");
-        final boolean stratzApi = StringUtils.equals(parse.getHost(),"api.stratz.com");
+        final HttpUrl parse = HttpUrl.parse(u);
+        final boolean steamApi = StringUtils.equals(parse.host(), "api.steampowered.com");
+        final boolean stratzApi = StringUtils.equals(parse.host(), "api.stratz.com");
+        final String target;
         if (steamApi) {
             // choose an api key to use
-    final String[] apiKeys = config.STEAM_API_KEY.split(",");
-    parse.getQuery().
-            parse.query.key = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-            parse.search = null;
+            final String[] apiKeys = config.STEAM_API_KEY.split(",");
+            HttpUrl.Builder builder = parse.newBuilder();
+            builder.setQueryParameter("key", apiKeys[(int) Math.floor(Math.random() * apiKeys.length)]);
             // choose a steam api host
-    final String[] apiHosts = config.STEAM_API_HOST.split(",");
-            parse.host = apiHosts[Math.floor(Math.random() * apiHosts.length)];
+            final String[] apiHosts = config.STEAM_API_HOST.split(",");
+            builder.host(apiHosts[(int) Math.floor(Math.random() * apiHosts.length)]);
+            target = builder.toString();
         }
-  const target = urllib.format(parse);
-        console.log('%s - getData: %s', new Date(), target);
+        log.info("{} - getData: {}", new Date(), target);
+        Thread.sleep(delay);
+
+
         return setTimeout(() = > {
                 request({
                         url:target,
@@ -328,5 +337,13 @@ public class Utility {
       });
         });
   },delay);
+    }
+
+
+    /**
+     * Determines if a player is radiant
+     */
+    public boolean isRadiant(JsonNode player) {
+        return player.get("player_slot").asInt() < 128;
     }
 }
