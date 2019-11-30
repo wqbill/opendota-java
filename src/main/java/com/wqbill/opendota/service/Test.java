@@ -12,5 +12,7 @@ public class Test {
         System.out.println(new Date());
     }
 
-    public static String match_seq_num = "4176282659";
+    public static String match_seq_num = "5130564964";
+
+    public static String match_id = "5130564964";
 }

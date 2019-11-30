@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 public class StartController {
     @Autowired
-    Utility utility;
+    Utility utility = new Utility();
     @RequestMapping("start")
     public void start() throws Exception {
         Map<String, Object> map = new HashMap<>();
@@ -32,14 +32,12 @@ public class StartController {
         JsonNode json = objectMapper.readTree(response.body().byteStream());
         JsonNode matches = json.get("result").get("matches");
         for (JsonNode match : matches) {
-//            System.out.println(match);
+            System.out.println(match);
         }
         System.out.println(matches.get(matches.size() - 1).get("match_seq_num").asLong() + 1);
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.printf("%s%s%s",1,2,3);
-        System.out.printf("%s%s%s",4,5,6);
-//        new StartController().start();
+        new StartController().start();
     }
 }

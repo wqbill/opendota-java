@@ -70,7 +70,7 @@ public class Utility {
 
     public ApiJob generateJob(String type, Map<String, Object> payload) {
         ApiJob apiJob = new ApiJob();
-        String apiKey;
+        String apiKey = "A33FF4A5D4F26785DF43E75B5245A531";
         StringBuilder stringBuilder = new StringBuilder(apiUrl);
         String match_id = (String) payload.get("match_id");
         String account_id = (String) payload.get("account_id");
@@ -247,97 +247,97 @@ public class Utility {
     @Autowired
     Config config;
 
-    public void getData(Map url, Callback cb) {
-        String u;
-        int delay = Integer.parseInt(config.DEFAULT_DELAY);
-        int timeout = 5000;
-        if (url != null && url.get("url") != null) {
-            // options object
-            if (url.get("url") instanceof List) {
-                // select a random element if array
-                List urlList = (List) url.get("url");
-                u = urlList.get((int) Math.floor(Math.random() * urlList.size())).toString();
-            } else {
-                u = url.get("url").toString();
-            }
-            delay = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("delay").toString()), delay);
-            timeout = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("timeout").toString()), timeout);
-        } else {
-            u = url;
-        }
-        final HttpUrl parse = HttpUrl.parse(u);
-        final boolean steamApi = StringUtils.equals(parse.host(), "api.steampowered.com");
-        final boolean stratzApi = StringUtils.equals(parse.host(), "api.stratz.com");
-        final String target;
-        if (steamApi) {
-            // choose an api key to use
-            final String[] apiKeys = config.STEAM_API_KEY.split(",");
-            HttpUrl.Builder builder = parse.newBuilder();
-            builder.setQueryParameter("key", apiKeys[(int) Math.floor(Math.random() * apiKeys.length)]);
-            // choose a steam api host
-            final String[] apiHosts = config.STEAM_API_HOST.split(",");
-            builder.host(apiHosts[(int) Math.floor(Math.random() * apiHosts.length)]);
-            target = builder.toString();
-        }
-        log.info("{} - getData: {}", new Date(), target);
-        Thread.sleep(delay);
-
-
-        return setTimeout(() = > {
-                request({
-                        url:target,
-                json:!(url.raw),
-                timeout,
-    },(err, res, body) =>{
-            if (err
-                    || !res
-                    || res.statusCode != = 200
-                    || !body
-                    || (steamApi
-                    && !url.raw
-                    && !body.result
-                    && !body.response
-                    && !body.player_infos
-                    && !body.teams
-                    && !body.game_list
-                    && !body.match
-                    && !body.data)
-                    || (stratzApi && (!body || !body[0]))
-            ) {
-                // invalid response
-                if (url.noRetry) {
-                    return cb(err || 'invalid response');
-                }
-                console.error('[INVALID] status: %s, retrying: %s', res ? res.statusCode : '', target);
-                // var backoff = res && res.statusCode === 429 ? delay * 2 : 0;
-        const backoff = 0;
-                return setTimeout(() = > {
-                        getData(url, cb);
-        },backoff);
-            } if (body.result) {
-                // steam api usually returns data with body.result, getplayersummaries has body.response
-                if (body.result.status == = 15
-                        || body.result.error == = 'Practice matches are not available via GetMatchDetails'
-                        || body.result.error == = 'No Match ID specified'
-                        || body.result.error == = 'Match ID not found') {
-                    // private match history or attempting to get practice match/invalid id, don't retry
-                    // non-retryable
-                    return cb(body);
-                } if (body.result.error || body.result.status == = 2) {
-                    // valid response, but invalid data, retry
-                    if (url.noRetry) {
-                        return cb(err || 'invalid data');
-                    }
-                    console.error('invalid data, retrying: %s, %s', target, JSON.stringify(body));
-                    return getData(url, cb);
-                }
-            }
-            return cb(null, body, {
-                    hostname:parse.host,
-      });
-        });
-  },delay);
-    }
+//    public void getData(Map url, Callback cb) {
+//        String u;
+//        int delay = Integer.parseInt(config.DEFAULT_DELAY);
+//        int timeout = 5000;
+//        if (url != null && url.get("url") != null) {
+//            // options object
+//            if (url.get("url") instanceof List) {
+//                // select a random element if array
+//                List urlList = (List) url.get("url");
+//                u = urlList.get((int) Math.floor(Math.random() * urlList.size())).toString();
+//            } else {
+//                u = url.get("url").toString();
+//            }
+//            delay = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("delay").toString()), delay);
+//            timeout = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("timeout").toString()), timeout);
+//        } else {
+//            u = url;
+//        }
+//        final HttpUrl parse = HttpUrl.parse(u);
+//        final boolean steamApi = StringUtils.equals(parse.host(), "api.steampowered.com");
+//        final boolean stratzApi = StringUtils.equals(parse.host(), "api.stratz.com");
+//        final String target;
+//        if (steamApi) {
+//            // choose an api key to use
+//            final String[] apiKeys = config.STEAM_API_KEY.split(",");
+//            HttpUrl.Builder builder = parse.newBuilder();
+//            builder.setQueryParameter("key", apiKeys[(int) Math.floor(Math.random() * apiKeys.length)]);
+//            // choose a steam api host
+//            final String[] apiHosts = config.STEAM_API_HOST.split(",");
+//            builder.host(apiHosts[(int) Math.floor(Math.random() * apiHosts.length)]);
+//            target = builder.toString();
+//        }
+//        log.info("{} - getData: {}", new Date(), target);
+//        Thread.sleep(delay);
+//
+//
+//        return setTimeout(() = > {
+//                request({
+//                        url:target,
+//                json:!(url.raw),
+//                timeout,
+//    },(err, res, body) =>{
+//            if (err
+//                    || !res
+//                    || res.statusCode != = 200
+//                    || !body
+//                    || (steamApi
+//                    && !url.raw
+//                    && !body.result
+//                    && !body.response
+//                    && !body.player_infos
+//                    && !body.teams
+//                    && !body.game_list
+//                    && !body.match
+//                    && !body.data)
+//                    || (stratzApi && (!body || !body[0]))
+//            ) {
+//                // invalid response
+//                if (url.noRetry) {
+//                    return cb(err || 'invalid response');
+//                }
+//                console.error('[INVALID] status: %s, retrying: %s', res ? res.statusCode : '', target);
+//                // var backoff = res && res.statusCode === 429 ? delay * 2 : 0;
+//        const backoff = 0;
+//                return setTimeout(() = > {
+//                        getData(url, cb);
+//        },backoff);
+//            } if (body.result) {
+//                // steam api usually returns data with body.result, getplayersummaries has body.response
+//                if (body.result.status == = 15
+//                        || body.result.error == = 'Practice matches are not available via GetMatchDetails'
+//                        || body.result.error == = 'No Match ID specified'
+//                        || body.result.error == = 'Match ID not found') {
+//                    // private match history or attempting to get practice match/invalid id, don't retry
+//                    // non-retryable
+//                    return cb(body);
+//                } if (body.result.error || body.result.status == = 2) {
+//                    // valid response, but invalid data, retry
+//                    if (url.noRetry) {
+//                        return cb(err || 'invalid data');
+//                    }
+//                    console.error('invalid data, retrying: %s, %s', target, JSON.stringify(body));
+//                    return getData(url, cb);
+//                }
+//            }
+//            return cb(null, body, {
+//                    hostname:parse.host,
+//      });
+//        });
+//  },delay);
+//    }
 
 
     /**
