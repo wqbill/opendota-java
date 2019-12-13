@@ -1,13 +1,39 @@
-[(${a})]
-[(${b})]
-[[${b}]]
+package [(${packageName})]
 
-[# th:if="${120&lt;a}"]
-Congratulations!
+import java.util.*;
+[# th:if="${lombok}"]
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+[/]
+[# th:if="${jpa}"]
+import javax.persistence.Column;
 [/]
 
-[# th:each="item : ${array}"]
-        - [(${item})]
+[# th:if="${lombok}"]
+@Data
+@EqualsAndHashCode
+@ToString
 [/]
+public class [(${className})]{
+
+[# th:each="field : ${fields}"]
+    [# th:if="${jpa}"]
+    @Column(name = "[(${field.originalName})]")
+    [/]
+    private [(${field.type})] [(${field.name})];
+
+    [# th:if="!${lombok}"]
+        [# th:with="getOrIs=field.type=='Boolean'?'is':'get'"/]
+    public [(${field.type})] [(${field.getOrIs})][(${field.capitalName})]() {
+        return [(${field.name})];
+    }
+
+    public void set[(${field.capitalName})](${field.type} ${field.name}) {
+        this.${field.name} = ${field.name};
+    }
+    [/]
+[/]
+}
 
 
