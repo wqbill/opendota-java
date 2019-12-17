@@ -6,7 +6,12 @@ import com.fasterxml.jackson.databind.node.*;
 import com.wqbill.opendota.json.Field;
 import com.wqbill.opendota.util.FieldUtils;
 import org.springframework.core.io.ClassPathResource;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,14 +23,18 @@ public class JsonTest {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(classPathResource.getInputStream());
         Queue<JsonNode> queue = new LinkedList<>();
+        Queue<String> typeQueue = new LinkedList<>();
         queue.offer(root);
-        traversal(queue);
+        // 主类名配置
+        typeQueue.offer("MatchDetail");
+        traversal(queue, typeQueue);
     }
 
-    private static void traversal(Queue<JsonNode> queue) {
+    private static void traversal(Queue<JsonNode> queue, Queue<String> typeQueue) {
         if (!queue.isEmpty()) {
             JsonNode node = queue.poll();
-            System.out.println("start###############");
+            String className = typeQueue.poll();
+            System.out.println("当前节点\t" + className);
             // 最顶层不是array
             if (node instanceof ObjectNode) {
                 // 每个object生成一个class
@@ -39,8 +48,6 @@ public class JsonTest {
                     System.out.println(x.getKey() + "\t" + fieldNode.getNodeType());
                     switch (fieldNode.getNodeType()) {
                         case ARRAY:
-                            field.setType("List<subType>");
-                            System.out.println("@@@@@@@@@@@@@@@@@@");
                             ArrayNode an = (ArrayNode) fieldNode;
                             int count = 0;
                             while (an.size() > 0 && an.get(0) instanceof ArrayNode) {
@@ -50,8 +57,9 @@ public class JsonTest {
                             String subType;
                             if (an.size() > 0) {
                                 JsonNode firstSub = an.get(0);
+                                subType = FieldUtils.arrayName(x.getKey());
                                 queue.offer(firstSub);
-                                subType = FieldUtils.capitalFirst(FieldUtils.singular(x.getKey()));
+                                typeQueue.offer(subType);
                             } else {
                                 subType = "Object";
                             }
@@ -98,8 +106,10 @@ public class JsonTest {
                             field.setType(type);
                             break;
                         case OBJECT:
-                            field.setType(FieldUtils.capitalFirst(FieldUtils.singular(x.getKey())));
+                            subType = FieldUtils.objectName(x.getKey());
+                            field.setType(subType);
                             queue.offer(x.getValue());
+                            typeQueue.offer(subType);
                             break;
                         case POJO:
                             break;
@@ -108,11 +118,34 @@ public class JsonTest {
                             break;
                     }
                     System.out.println(field.getType());
-                    fields.add(field);
                 });
+                // thymeleaf模版
+                Context context = new Context();
+                context.setVariable("fields", fields);
+                context.setVariable("jpa", true);
+//                context.setVariable("lombok", true);
+                context.setVariable("lombok", false);
+                context.setVariable("className", className);
+                context.setVariable("packageName", "tv.cty");
+                ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+                resolver.setPrefix("templates/");
+                resolver.setSuffix(".java");
+                resolver.setTemplateMode(TemplateMode.TEXT);
+                TemplateEngine engine = new TemplateEngine();
+                engine.setTemplateResolver(resolver);
+                FileWriter writer = null;
+                try {
+                    // 路径配置
+                    // 模版config
+                    // e.g. ThymeleafConfig
+                    writer = new FileWriter(className + ".java");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                engine.process("JsonData", context, writer);
             }
             System.out.println("end###############");
-            traversal(queue);
+            traversal(queue, typeQueue);
         }
     }
 }

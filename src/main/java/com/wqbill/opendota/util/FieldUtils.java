@@ -44,6 +44,14 @@ public class FieldUtils {
         return name;
     }
 
+    public static String objectName(String name) {
+        return capitalFirst(underlineToCamel(singular(name)));
+    }
+
+    public static String arrayName(String name) {
+        return capitalFirst(underlineToCamel(singular(name)));
+    }
+
     public static void main(String[] args) {
         System.out.println("cases".substring(0, "cases".length() - 1));
     }

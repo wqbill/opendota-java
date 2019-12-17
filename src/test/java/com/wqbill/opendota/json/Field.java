@@ -10,13 +10,13 @@ public class Field {
     private String capitalName;
 
     public String getCapitalName() {
-        return FieldUtils.capitalFirst(originalName);
+        return FieldUtils.capitalFirst(getName());
     }
 
     private String name;
 
     public String getName() {
-        return FieldUtils.underlineToCamel(name);
+        return FieldUtils.underlineToCamel(originalName);
     }
     private String subType;
     private boolean array;

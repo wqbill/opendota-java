@@ -1,6 +1,6 @@
 package com.wqbill.opendota.config;
 
-public class Config {
+public class ThymeleafConfig {
     private String className;
     private String packageName;
     private boolean lombok;
