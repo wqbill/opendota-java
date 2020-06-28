@@ -3,10 +3,14 @@ package com.wqbill.opendota.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wqbill.opendota.commons.Callback;
+import com.wqbill.opendota.commons.Url;
 import com.wqbill.opendota.config.Config;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriBuilder;
 import sun.net.util.URLUtil;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
@@ -56,6 +61,23 @@ public class Utility {
         private String url;
         private String title;
         private String type;
+        private Boolean noRetry;
+        private Boolean raw;
+        private Boolean json;
+
+        public void setPayload(Map<String, Object> payload) {
+            this.payload = payload;
+            if (payload.get("noRetry") != null) {
+                setNoRetry(Boolean.valueOf(payload.get("noRetry").toString()));
+            }
+            if (payload.get("raw") != null) {
+                setRaw(Boolean.valueOf(payload.get("raw").toString()));
+            }
+            if (payload.get("json") != null) {
+                setJson(Boolean.valueOf(payload.get("json").toString()));
+            }
+        }
+
         private Map<String, Object> payload;
 
         public Object get(String key) {
@@ -247,97 +269,51 @@ public class Utility {
     @Autowired
     Config config;
 
-//    public void getData(Map url, Callback cb) {
-//        String u;
-//        int delay = Integer.parseInt(config.DEFAULT_DELAY);
-//        int timeout = 5000;
-//        if (url != null && url.get("url") != null) {
-//            // options object
-//            if (url.get("url") instanceof List) {
-//                // select a random element if array
-//                List urlList = (List) url.get("url");
-//                u = urlList.get((int) Math.floor(Math.random() * urlList.size())).toString();
-//            } else {
-//                u = url.get("url").toString();
-//            }
-//            delay = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("delay").toString()), delay);
-//            timeout = ObjectUtils.defaultIfNull(Integer.parseInt(url.get("timeout").toString()), timeout);
-//        } else {
-//            u = url;
-//        }
-//        final HttpUrl parse = HttpUrl.parse(u);
-//        final boolean steamApi = StringUtils.equals(parse.host(), "api.steampowered.com");
-//        final boolean stratzApi = StringUtils.equals(parse.host(), "api.stratz.com");
-//        final String target;
-//        if (steamApi) {
-//            // choose an api key to use
-//            final String[] apiKeys = config.STEAM_API_KEY.split(",");
-//            HttpUrl.Builder builder = parse.newBuilder();
-//            builder.setQueryParameter("key", apiKeys[(int) Math.floor(Math.random() * apiKeys.length)]);
-//            // choose a steam api host
-//            final String[] apiHosts = config.STEAM_API_HOST.split(",");
-//            builder.host(apiHosts[(int) Math.floor(Math.random() * apiHosts.length)]);
-//            target = builder.toString();
-//        }
-//        log.info("{} - getData: {}", new Date(), target);
-//        Thread.sleep(delay);
-//
-//
-//        return setTimeout(() = > {
-//                request({
-//                        url:target,
-//                json:!(url.raw),
-//                timeout,
-//    },(err, res, body) =>{
-//            if (err
-//                    || !res
-//                    || res.statusCode != = 200
-//                    || !body
-//                    || (steamApi
-//                    && !url.raw
-//                    && !body.result
-//                    && !body.response
-//                    && !body.player_infos
-//                    && !body.teams
-//                    && !body.game_list
-//                    && !body.match
-//                    && !body.data)
-//                    || (stratzApi && (!body || !body[0]))
-//            ) {
-//                // invalid response
-//                if (url.noRetry) {
-//                    return cb(err || 'invalid response');
-//                }
-//                console.error('[INVALID] status: %s, retrying: %s', res ? res.statusCode : '', target);
-//                // var backoff = res && res.statusCode === 429 ? delay * 2 : 0;
-//        const backoff = 0;
-//                return setTimeout(() = > {
-//                        getData(url, cb);
-//        },backoff);
-//            } if (body.result) {
-//                // steam api usually returns data with body.result, getplayersummaries has body.response
-//                if (body.result.status == = 15
-//                        || body.result.error == = 'Practice matches are not available via GetMatchDetails'
-//                        || body.result.error == = 'No Match ID specified'
-//                        || body.result.error == = 'Match ID not found') {
-//                    // private match history or attempting to get practice match/invalid id, don't retry
-//                    // non-retryable
-//                    return cb(body);
-//                } if (body.result.error || body.result.status == = 2) {
-//                    // valid response, but invalid data, retry
-//                    if (url.noRetry) {
-//                        return cb(err || 'invalid data');
-//                    }
-//                    console.error('invalid data, retrying: %s, %s', target, JSON.stringify(body));
-//                    return getData(url, cb);
-//                }
-//            }
-//            return cb(null, body, {
-//                    hostname:parse.host,
-//      });
-//        });
-//  },delay);
-//    }
+    public void getData(Url url, Callback cb) {
+        String u = url.getUrl();
+        int delay = Integer.parseInt(config.DEFAULT_DELAY);
+        int timeout = 5000;
+        HttpUrl parse = HttpUrl.parse(u);
+        boolean steamApi = StringUtils.equals(parse.host(), "api.steampowered.com");
+        boolean stratzApi = StringUtils.equals(parse.host(), "api.stratz.com");
+        String target;
+        if (steamApi) {
+            // choose an api key to use
+            final String[] apiKeys = config.STEAM_API_KEY.split(",");
+            HttpUrl.Builder builder = parse.newBuilder();
+            builder.setQueryParameter("key", apiKeys[(int) Math.floor(Math.random() * apiKeys.length)]);
+            // choose a steam api host
+            final String[] apiHosts = config.STEAM_API_HOST.split(",");
+            builder.host(apiHosts[(int) Math.floor(Math.random() * apiHosts.length)]);
+        }
+        target = parse.toString();
+        log.info("{} - getData: {}", new Date(), target);
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(target).build();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode json = null;
+        try {
+            json = objectMapper.readTree(response.body().byteStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        JsonNode result = json.get("result");
+        if (result != null) {
+            cb.execute(json);
+        }
+    }
 
 
     /**
